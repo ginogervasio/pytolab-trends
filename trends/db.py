@@ -21,16 +21,16 @@ class Db(object):
     db_disk_posts = None
     db_cursor = None
     retries = 360
-    retry_wait = 10 
+    retry_wait = 10
     cmd_retries = 10
-    cmd_retry_wait = 10 
-    
+    cmd_retry_wait = 10
+
     def __init__(self):
         c = config.Config()
         self.config = c.cfg
         self.log = logging.getLogger('db')
         self.dir_root = self.config.get('trends', 'root')
-    
+
     def setup(self):
         """
         Setup the connection to Redis DB and to MySQL DB.
@@ -39,14 +39,14 @@ class Db(object):
         self.setup_mysql_loop()
         # Get marker to know if a post id is in Redis or MySQL.
         self.posts_tid = int(self.get('posts_tid'))
-         
+
     def setup_redis(self):
         """Connections to Redis."""
         host = self.config.get('redis', 'host')
         port = self.config.getint('redis', 'port')
         self.db_mem = redis.Redis(host=host, port=port, db=0)
         self.db_mem_posts = redis.Redis(host=host, port=port, db=1)
-    
+
     def setup_mysql_loop(self):
         """Setup connection to Redis until it succeeds"""
         retry = 0
@@ -137,13 +137,13 @@ class Db(object):
 
     def lset(self, key, index, value):
         return self.redis_cmd('lset', key, index, value)
-    
+
     def lindex(self, key, index):
         return self.redis_cmd('lindex', key, index)
 
     def mysql_command(self, cmd, sql, writer, commit, *args):
         """Command to MySQL.
-        
+
         Try cmd_retries times."""
         retry = 0
         while retry < self.cmd_retries:
@@ -154,7 +154,7 @@ class Db(object):
                         self.db_disk_posts.commit()
                     return r
                 else:
-                    return self.db_cursor.fetchall() 
+                    return self.db_cursor.fetchall()
             except (MySQLdb.OperationalError, MySQLdb.InternalError):
                 self.log.error('MySQL cmd %s DB error', cmd)
                 # reconnect
@@ -169,7 +169,7 @@ class Db(object):
                 self.log.error('MySQL cmd %s does not exist', cmd)
                 raise exceptions.DbError()
         raise exceptions.DbError()
-    
+
     def sql_read(self, sql, *args):
         """Read command to MySQL."""
         return self.mysql_command('execute', sql, False, False, *args)
@@ -208,7 +208,7 @@ class Db(object):
             except exceptions.DbError:
                 r = None
         return r
-              
+
     def get_persons(self):
         """
         Get list of persons from db
@@ -219,9 +219,9 @@ class Db(object):
             s = n.split(':')
             person = {}
             person['id'] = int(s[0])
-            person['first_name'] = s[1] 
-            person['name'] = s[2] 
-            person['nickname'] = s[3] 
+            person['first_name'] = s[1]
+            person['name'] = s[2]
+            person['nickname'] = s[3]
             person['group'] = int(s[4])
             person['words'] = json.loads(s[5])
             person['posts_count'] = 0
@@ -263,4 +263,4 @@ class Db(object):
         sql = 'select person_id from tp_person_post where post_id = %s'
         rows = self.sql_read(sql, post_id)
         return [row[0] for row in rows]
-         
+

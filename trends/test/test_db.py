@@ -10,7 +10,7 @@ import MySQLdb
 
 import trends.db as db
 import trends.exceptions as exceptions
-    
+
 logging.basicConfig(filename='log_test_db.txt',level=logging.DEBUG)
 
 class DbTest(unittest.TestCase):
@@ -31,7 +31,7 @@ class DbTest(unittest.TestCase):
 
     @patch('redis.Redis')
     def test_setup_redis(self, redis_class_mock):
-        redis_instance = 'test_redis_instance' 
+        redis_instance = 'test_redis_instance'
         redis_class_mock.return_value = redis_instance
         self.db.setup_redis()
         call_args_list = redis_class_mock.call_args_list
@@ -112,12 +112,13 @@ class DbTest(unittest.TestCase):
             self.db.redis_command,
             0, 'get', 'test_key')
         db_mem_mock.get.assert_called_once_with('test_key')
-    
+
     @patch.object(db.Db, 'db_disk_posts')
     @patch.object(db.Db, 'db_cursor')
     def test_mysql_command(self, db_cursor_mock, db_disk_posts_mock):
         db_cursor_mock.fetchall.return_value = ((1,2,3))
-        r = self.db.mysql_command('execute', 'test_sql', False, 'test_arg')
+        r = self.db.mysql_command('execute', 'test_sql', False, False,
+            'test_arg')
         db_cursor_mock.execute.assert_called_once_with(
             'test_sql', ('test_arg',))
         self.assertTrue(db_cursor_mock.fetchall.called)
@@ -128,7 +129,8 @@ class DbTest(unittest.TestCase):
     @patch.object(db.Db, 'db_cursor')
     def test_mysql_command_writer(self, db_cursor_mock, db_disk_posts_mock):
         db_cursor_mock.execute.return_value = 2
-        r = self.db.mysql_command('execute', 'test_sql', True, 'test_arg')
+        r = self.db.mysql_command('execute', 'test_sql', True, True,
+            'test_arg')
         db_cursor_mock.execute.assert_called_once_with(
             'test_sql', ('test_arg',))
         self.assertTrue(db_disk_posts_mock.commit.called)
@@ -142,7 +144,7 @@ class DbTest(unittest.TestCase):
         setup_mysql_loop_mock.side_effect = exceptions.DbError()
         self.assertRaises(exceptions.DbError,
             self.db.mysql_command,
-            'execute', 'test_sql', True, 'test_arg')
+            'execute', 'test_sql', True, True, 'test_arg')
         db_cursor_mock.execute.assert_called_once_with(
             'test_sql', ('test_arg',))
 
@@ -165,7 +167,7 @@ class DbTest(unittest.TestCase):
         db_cursor_mock.execute.side_effect = MySQLdb.Error()
         self.assertRaises(exceptions.DbError,
             self.db.mysql_command,
-            'execute', 'test_sql', True, 'test_arg')
+            'execute', 'test_sql', True, True, 'test_arg')
         db_cursor_mock.execute.assert_called_with(
             'test_sql', ('test_arg',))
         self.assertEqual(db_cursor_mock.execute.call_count, 2)
@@ -175,14 +177,14 @@ class DbTest(unittest.TestCase):
         db_cursor_mock.execute.side_effect = AttributeError()
         self.assertRaises(exceptions.DbError,
             self.db.mysql_command,
-            'execute', 'test_sql', True, 'test_arg')
+            'execute', 'test_sql', True, True, 'test_arg')
         db_cursor_mock.execute.assert_called_with(
             'test_sql', ('test_arg',))
 
     @patch.object(db.Db, 'redis_cmd')
     def test_get_persons(self, redis_cmd_mock):
         data = (('1:test_first_name_1:test_name_1:test_nickname_1:2:'\
-                 '[\"test_word_1\", \"test_word_2\"]'), 
+                 '[\"test_word_1\", \"test_word_2\"]'),
                 ('3:test_first_name_2:test_name_2:test_nickname_2:4:'\
                  '[\"test_word_3\", \"test_word_4\"]'))
         redis_cmd_mock.return_value = data
@@ -198,7 +200,7 @@ class DbTest(unittest.TestCase):
              'posts_count': 0,
              'words': ['test_word_3', 'test_word_4']})
         redis_cmd_mock.assert_called_once_with('lrange', 'persons', 0, -1)
-    
+
     @patch.object(db.Db, 'redis_cmd')
     def test_set_persons(self, redis_cmd_mock):
         with open('names.txt', 'w') as f:
@@ -206,9 +208,9 @@ class DbTest(unittest.TestCase):
         self.db.set_persons()
         self.assertEqual(redis_cmd_mock.call_args_list,
             [call('delete', 'persons'), call('rpush', 'persons', 'test_name_1'),
-             call('rpush', 'persons', 'test_name_2')]) 
+             call('rpush', 'persons', 'test_name_2')])
         os.remove('names.txt')
-    
+
     @patch.object(db.Db, 'set')
     @patch.object(db.Db, 'sql_write')
     def test_set_post_redis(self, sql_write_mock, set_mock):
@@ -230,6 +232,6 @@ class DbTest(unittest.TestCase):
               'on duplicate key update post=%s'
         sql_write_mock.assert_called_once_with(sql, post_id, value, value)
         self.assertFalse(set_mock.called)
-      
+
 if __name__ == '__main__':
     unittest.main()

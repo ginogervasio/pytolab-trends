@@ -190,7 +190,8 @@ class Test(unittest.TestCase):
         self.assertEqual(rpush_mock.call_args_list,
             [call('person:2:posts:0', 3),
              call('posts:0', 3)])
-        set_post_mock.assert_called_once_with(3, 'msg:<$>:99')
+        set_post_mock.assert_called_once_with(3,
+            '{"msg": "msg", "text": "a name_2 worda b"}')
 
     @patch.object(trends.Trends, 'update_person_stats')
     @patch.object(time, 'time')
@@ -218,7 +219,8 @@ class Test(unittest.TestCase):
             [call('person:2:posts:0', 3),
              call('person:3:posts:0', 3),
              call('posts:0', 3)])
-        set_post_mock.assert_called_once_with(3, 'msg:<$>:99')
+        set_post_mock.assert_called_once_with(3,
+            '{"msg": "msg", "text": "a name_2 worda name_1 b"}')
 
 
 if __name__ == '__main__':

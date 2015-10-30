@@ -8,7 +8,6 @@ import re
 import time
 import unicodedata
 
-import constants
 import exceptions
 
 def parse_post(data):
