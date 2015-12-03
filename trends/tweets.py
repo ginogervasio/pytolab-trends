@@ -27,12 +27,12 @@ class Tweets(Daemon):
         self.db = None
         c = config.Config()
         self.config = c.cfg
-    
+
     def setup(self):
         """
         Setup DB connections, message queue producer and the Twitter stream
         listener.
-        """ 
+        """
         self.setup_db()
         self.setup_mq()
         self.setup_stream_listener()
@@ -54,12 +54,13 @@ class Tweets(Daemon):
         """
         listener = Listener()
         listener.set_tweets(self)
-        self.stream = tweepy.Stream(
-            self.config.get('twitter', 'userid'),
-            self.config.get('twitter', 'password'),
-            listener,
-            timeout=3600
-        )
+
+        auth = tweepy.OAuthHandler(self.config.get('twitter', 'consumer_token'),
+            self.config.get('twitter', 'consumer_secret'))
+        auth.set_access_token(self.config.get('twitter', 'access_token'),
+            self.config.get('twitter', 'access_token_secret'))
+
+        self.stream = tweepy.Stream(auth, listener, timeout=3600)
 
     def run(self):
         self.setup()
@@ -99,7 +100,7 @@ class Listener(tweepy.StreamListener):
                        'time': int(time.time())}
             logging.debug(message)
             self.tweets.producer.publish(json.dumps(message), 'posts')
-    
+
     def on_error(self, status_code):
         """
         Callback when there is an error on the stream
@@ -111,7 +112,7 @@ class Listener(tweepy.StreamListener):
         Callback when there is a timeout on the stream
         """
         logging.debug('timeout')
-        
+
     def on_limit(self, track):
         """Called when a limitation notice arrives"""
         logging.debug('limit: %s', track)

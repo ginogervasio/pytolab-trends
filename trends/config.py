@@ -1,7 +1,5 @@
 import ConfigParser
-
 class Config(object):
-    config = None
 
     def __init__(self):
         self.read_config()
@@ -10,4 +8,3 @@ class Config(object):
         """Return config object from config file"""
         self.cfg = ConfigParser.ConfigParser()
         self.cfg.read('trends.cfg')
-
