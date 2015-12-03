@@ -222,8 +222,8 @@ class Db(object):
             person['first_name'] = s[1]
             person['name'] = s[2]
             person['nickname'] = s[3]
-            person['group'] = int(s[4])
-            person['words'] = json.loads(s[5])
+#            person['group'] = int(s[4])
+            person['words'] = json.loads(s[4])
             person['posts_count'] = 0
             person['rel'] = {}
             persons.append(person)
@@ -240,7 +240,7 @@ class Db(object):
             for line in f:
                 self.redis_cmd('rpush', key, line.rstrip('\n'))
 
-    def iter_posts(self): 
+    def iter_posts(self):
         post_id_start = 108673
         post_id_end = 8561087
         last_id = post_id_start

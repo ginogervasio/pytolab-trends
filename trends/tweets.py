@@ -14,6 +14,8 @@ import db
 from daemon import Daemon
 import mq
 
+import pdb
+
 class Tweets(Daemon):
     """
     Tweets main class
@@ -39,6 +41,7 @@ class Tweets(Daemon):
 
     def setup_db(self):
         # setup db connections
+        pdb.set_trace()
         self.db = db.Db()
         self.db.setup()
         # get latest persons list
@@ -61,6 +64,8 @@ class Tweets(Daemon):
             self.config.get('twitter', 'access_token_secret'))
 
         self.stream = tweepy.Stream(auth, listener, timeout=3600)
+
+        pdb.set_trace()
 
     def run(self):
         self.setup()
@@ -130,7 +135,7 @@ class Listener(tweepy.StreamListener):
         self.tweets = t
 
 if __name__ == "__main__":
-    daemon = Tweets('/tmp/tweets.pid')
+    daemon = Tweets('tweets.pid')
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
             daemon.start()

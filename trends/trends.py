@@ -33,7 +33,7 @@ class Trends(Daemon):
         self.setup_db()
         self.setup_mq()
         self.update_stats()
-    
+
     def setup_db(self):
         """Setup DB connections, get initial data from DB."""
         # setup db connections
@@ -51,7 +51,7 @@ class Trends(Daemon):
     def setup_mq(self):
         """Setup message queue consumer."""
         self.mq = mq.MQ()
-        self.mq.init_consumer(message_callback)
+        self.mq.init_consumer(self.message_callback)
 
     def update_stats(self):
         """Fill past persons stats.
@@ -71,7 +71,7 @@ class Trends(Daemon):
             # we want the stats update to happen at the top of the hour
             t = int(time.time())
             s = time.gmtime(t)
-            t -= (s.tm_min * 60 + s.tm_sec) 
+            t -= (s.tm_min * 60 + s.tm_sec)
             self.stats_last_update = t
             self.fill_stats(1)
             self.db.set('statsFirstUpdate', self.stats_last_update)
@@ -81,8 +81,8 @@ class Trends(Daemon):
         to consume.
         """
         self.setup()
-        self.consumer.wait()
-    
+        self.mq.consumer.wait()
+
     def message_callback(self, message):
         """This is called when a new message arrives.
 
@@ -128,10 +128,10 @@ class Trends(Daemon):
                 self.db.rpush(key, post_id)
         else:
             logging.debug('found english word in %s', text)
-            
+
     def update_person_stats(self, person):
         """Increment person's post count. Update dict of relations with other
-        persons. 
+        persons.
         """
         key = 'person:%d:posts_count' % (person['id'])
         v = int(self.db.lindex(key, -1))

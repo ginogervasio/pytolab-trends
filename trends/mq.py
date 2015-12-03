@@ -17,7 +17,7 @@ class MQ(object):
     def init_consumer(self, callback):
         """Initialize a consumer to read from a queue."""
         try:
-            self.consumer = consumer.Consumer(
+            self.consumer = Consumer(
                 self.config.get('rabbitmq', 'host'),
                 self.config.get('rabbitmq', 'userid'),
                 self.config.get('rabbitmq', 'password'))
@@ -59,7 +59,7 @@ class Consumer(object):
         """
         self.channel.close()
         self.connection.close()
-  
+
     def declare_exchange(self, exchange_name, durable=True, auto_delete=False):
         """
         Create exchange.
