@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import logging
+from log import logger
 import time
 import json
 import sys
@@ -24,7 +24,11 @@ class Tweets(Daemon):
         """
         Constructor
         """
-        logging.basicConfig(filename='log_tweets.txt',level=logging.DEBUG)
+        DEFAULT_LOG_FORMAT_STRING = '%(asctime)s [pid:%(process)d %(name)s ' \
+                            '%(filename)s:(%(lineno)d)] %(levelname)s: ' \
+                            '%(message)s'
+
+#        logging.basicConfig(filename='log_tweets.txt', filemode='w+', level=logging.DEBUG)
         Daemon.__init__(self, pid_file)
         self.db = None
         c = config.Config()
@@ -41,7 +45,6 @@ class Tweets(Daemon):
 
     def setup_db(self):
         # setup db connections
-        pdb.set_trace()
         self.db = db.Db()
         self.db.setup()
         # get latest persons list
@@ -65,8 +68,6 @@ class Tweets(Daemon):
 
         self.stream = tweepy.Stream(auth, listener, timeout=3600)
 
-        pdb.set_trace()
-
     def run(self):
         self.setup()
         self.stream_filter()
@@ -77,12 +78,12 @@ class Tweets(Daemon):
         """
         # add names to stream filter
         track_list = [data.normalize(p['name']) for p in self.persons]
-        logging.debug('track_list: %s', track_list)
+        logger.debug('track_list: %s', track_list)
         while True:
             try:
                 self.stream.filter(track=track_list)
-            except Exception:
-                logging.exception('stream filter')
+            except (Exception) as e:
+                logger.exception(e)
                 time.sleep(10)
 
 
@@ -94,8 +95,8 @@ class Listener(tweepy.StreamListener):
         """
         Callback when post is received ok
         """
-        if status.author.lang == 'fr':
-            logging.debug(status.text)
+        if status.author.lang == 'en':
+            logger.debug(status.text)
             message = {'author_name': status.author.screen_name,
                        'author_id': status.author.id,
                        'id': status.id,
@@ -103,29 +104,31 @@ class Listener(tweepy.StreamListener):
                        'retweeted': status.retweeted,
                        'coordinates': status.coordinates,
                        'time': int(time.time())}
-            logging.debug(message)
-            self.tweets.producer.publish(json.dumps(message), 'posts')
+            logger.debug(message)
+            self.tweets.mq.producer.publish(json.dumps(message), 'posts')
 
     def on_error(self, status_code):
         """
         Callback when there is an error on the stream
         """
-        logging.debug('error: %s', status_code)
+        logger.debug('error: %s', status_code)
+        if status_code == 420:
+            return False
 
     def on_timeout(self):
         """
         Callback when there is a timeout on the stream
         """
-        logging.debug('timeout')
+        logger.debug('timeout')
 
     def on_limit(self, track):
         """Called when a limitation notice arrives"""
-        logging.debug('limit: %s', track)
+        logger.debug('limit: %s', track)
         return
 
     def on_delete(self, status_id, user_id):
          """Called when a delete notice arrives for a status"""
-         logging.debug('delete: %s - %s', status_id, user_id)
+         logger.debug('delete: %s - %s', status_id, user_id)
          return
 
     def set_tweets(self, t):
@@ -148,5 +151,6 @@ if __name__ == "__main__":
             sys.exit(2)
         sys.exit(0)
     else:
-        print "usage: %s start|stop|restart" % sys.argv[0]
-        sys.exit(2)
+        daemon.run()
+#        print "usage: %s start|stop|restart" % sys.argv[0]
+#        sys.exit(2)

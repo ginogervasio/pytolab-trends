@@ -4,12 +4,12 @@
 import ConfigParser
 import time
 import redis
-import logging
 import calendar
 import datetime
 import json
 import re
 import sys
+from log import logger
 
 import config
 import data
@@ -25,7 +25,7 @@ class Trends(Daemon):
         Daemon.__init__(self, pid_file)
         c = config.Config()
         self.config = c.cfg
-        self.log = logging.getLogger('trends')
+#        self.log = logging.getLogger('trends')
         self.stats_freq = 3600
 
     def setup(self):
@@ -90,7 +90,8 @@ class Trends(Daemon):
         """
         # if just entered the next hour, we initialize the stats
         # for all persons
-        if time.time() - self.stats_last_update >= 0:
+        diff = int(time.time()) - self.stats_last_update
+        if diff >= 0:
             self.fill_stats((diff / 3600) + 1)
         post = json.loads(message.body)
         self.process_post(post)
@@ -104,7 +105,7 @@ class Trends(Daemon):
         text = data.normalize(post['text']).lower()
         self.first_person = None
         # check post language
-        if data.get_text_language(text) == 'fr':
+        if data.get_text_language(text) == 'en':
             for person in self.persons:
                 names = data.get_names(person)
                 if data.check_names(names, text, person['words']) == 1:
@@ -127,7 +128,7 @@ class Trends(Daemon):
                 key = 'posts:%d' % (self.stats_last_update)
                 self.db.rpush(key, post_id)
         else:
-            logging.debug('found english word in %s', text)
+            logger.debug('found english word in %s', text)
 
     def update_person_stats(self, person):
         """Increment person's post count. Update dict of relations with other
@@ -164,20 +165,20 @@ class Trends(Daemon):
         self.db.set(key, self.stats_last_update)
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2 and sys.argv[1] == 'test':
-        trends = Trends('/tmp/trends.pid', test_trends.Sentiment)
-    else:
-        trends = Trends('/tmp/trends.pid')
-    if len(sys.argv) == 2 and sys.argv[1] != 'test':
-        if 'start' == sys.argv[1]:
-            trends.start()
-        elif 'stop' == sys.argv[1]:
-            trends.stop()
-        elif 'restart' == sys.argv[1]:
-            trends.restart()
-        else:
-            print "Unknown command"
-            sys.exit(2)
-        sys.exit(0)
-    else:
-        trends.run()
+    trends = Trends('trends.pid')
+    trends.run()
+#    if len(sys.argv) == 2 and sys.argv[1] == 'test':
+#        trends = Trends('/tmp/trends.pid', test_trends.Sentiment)
+#    else:
+#        trends = Trends('/tmp/trends.pid')
+#    if len(sys.argv) == 2 and sys.argv[1] != 'test':
+#        if 'start' == sys.argv[1]:
+#            trends.start()
+#        elif 'stop' == sys.argv[1]:
+#            trends.stop()
+#        elif 'restart' == sys.argv[1]:
+#            trends.restart()
+#        else:
+#            print "Unknown command"
+#            sys.exit(2)
+#        sys.exit(0)

@@ -222,8 +222,8 @@ class Db(object):
             person['first_name'] = s[1]
             person['name'] = s[2]
             person['nickname'] = s[3]
-#            person['group'] = int(s[4])
-            person['words'] = json.loads(s[4])
+            person['group'] = int(s[4])
+            person['words'] = json.loads(s[5])
             person['posts_count'] = 0
             person['rel'] = {}
             persons.append(person)

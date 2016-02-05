@@ -33,7 +33,7 @@ class MQ(object):
     def init_producer(self):
         """Initialize a producer to publish messages."""
         try:
-            self.producer = producer.Producer('trends',
+            self.producer = Producer('trends',
                 self.config.get('rabbitmq', 'host'),
                 self.config.get('rabbitmq', 'userid'),
                 self.config.get('rabbitmq', 'password'))
