@@ -13,7 +13,7 @@ import exceptions
 def parse_post(data):
     """
     Parse post string containing attributes values.
-    
+
     Attributes values are separated by :<$>:.
     """
     try:
@@ -39,7 +39,7 @@ def normalize(s):
     if isinstance( s, str ):
         s = unicode(s, 'utf-8')
     return ''.join(
-        (c for c in unicodedata.normalize('NFD', s) 
+        (c for c in unicodedata.normalize('NFD', s)
             if unicodedata.category(c) != 'Mn'))
 
 def get_persons_words(persons):
@@ -61,7 +61,7 @@ def get_persons_words(persons):
 def clean_post(post):
     """
     Remove numbers, author names, urls and punctuation.
-    """ 
+    """
     number_re = re.compile(r'[0-9]+')
     user_re = re.compile(r'@([A-Za-z0-9_ùûüÿàâæçéèêëïîôœ]+)')
     url_re = re.compile(
@@ -107,25 +107,25 @@ def get_freq_words(path):
     """
     with open(path, 'r') as f:
        return [l.rstrip('\n') for l in f]
-      
+
 def get_text_language(text):
     """
     Return text language.
 
     Check for common english words. Return 'en' if any. Return 'fr' otherwise.
-    """ 
+    """
     ew = (' at ', ' the ', ' are ', ' to ', ' he ', ' she ', ' in ',
          ' is ')
     if any(n in text for n in ew):
         return 'en'
     else:
-        return 'fr'
+        return ''
 
 def find_text_person_words(text, name, words):
     """Check if one of the words preceeds or follows a name.
 
-    If o == -1: check for ' word name', 'word-name'... 
-    If o == -2: check for ' wordname', ' -wordname'... 
+    If o == -1: check for ' word name', 'word-name'...
+    If o == -2: check for ' wordname', ' -wordname'...
     If o == 1: check for 'name word', 'nameword', 'name--word'...
     If o == 2: check for 'nameword', 'nameword ',...
     """
@@ -151,7 +151,7 @@ def check_names(names, text, words):
     Returns 0 if name not found
     Returns 1 if name found without non-allowed words
     Returns 2 if name found with non-allowed words
-    """ 
+    """
     res = 0
     for n in names:
         idx = text.find(n)
@@ -167,7 +167,7 @@ def check_names(names, text, words):
 
 def get_names(person):
     """
-    Returns list containing a person's name, nickname. 
+    Returns list containing a person's name, nickname.
     """
     name = normalize(person['name']).lower()
     names = [name,]
@@ -190,7 +190,7 @@ def get_fr_datetime_from_timestamp(ts):
         d = datetime.datetime.fromtimestamp(ts + 3600)
 
     return d
-   
+
 def get_str_from_timestamp(ts, short=False):
     d = get_fr_datetime_from_timestamp(ts)
     if short:

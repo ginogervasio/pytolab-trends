@@ -108,18 +108,17 @@ class Trends(Daemon):
         if data.get_text_language(text) == 'en':
             for person in self.persons:
                 names = data.get_names(person)
-                if data.check_names(names, text, person['words']) == 1:
-                    # one more post for this person
-                    if not post_add:
-                        post_add = True
-                        # get next post id
-                        post_id = self.db.incr('nextPostId')
-                    # add post to person's posts list
-                    key = 'person:%d:posts:%d' % (person['id'],
-                            self.stats_last_update)
-                    self.db.rpush(key, post_id)
-                    # update stats for this person
-                    self.update_person_stats(person)
+                # one more post for this person
+                if not post_add:
+                    post_add = True
+                    # get next post id
+                    post_id = self.db.incr('nextPostId')
+                # add post to person's posts list
+                key = 'person:%d:posts:%d' % (person['id'],
+                        self.stats_last_update)
+                self.db.rpush(key, post_id)
+                # update stats for this person
+                self.update_person_stats(person)
             if post_add:
                 # add post to db
                 self.db.set_post(int(post_id),
@@ -128,7 +127,7 @@ class Trends(Daemon):
                 key = 'posts:%d' % (self.stats_last_update)
                 self.db.rpush(key, post_id)
         else:
-            logger.debug('found english word in %s', text)
+            logger.debug('possibly another language in %s', text)
 
     def update_person_stats(self, person):
         """Increment person's post count. Update dict of relations with other
@@ -165,20 +164,20 @@ class Trends(Daemon):
         self.db.set(key, self.stats_last_update)
 
 if __name__ == "__main__":
-    trends = Trends('trends.pid')
-    trends.run()
-#    if len(sys.argv) == 2 and sys.argv[1] == 'test':
-#        trends = Trends('/tmp/trends.pid', test_trends.Sentiment)
-#    else:
-#        trends = Trends('/tmp/trends.pid')
-#    if len(sys.argv) == 2 and sys.argv[1] != 'test':
-#        if 'start' == sys.argv[1]:
-#            trends.start()
-#        elif 'stop' == sys.argv[1]:
-#            trends.stop()
-#        elif 'restart' == sys.argv[1]:
-#            trends.restart()
-#        else:
-#            print "Unknown command"
-#            sys.exit(2)
-#        sys.exit(0)
+    trends = Trends('/tmp/trends.pid')
+#    trends.run()
+   if len(sys.argv) == 2 and sys.argv[1] == 'test':
+       trends = Trends('/tmp/trends.pid', test_trends.Sentiment)
+   else:
+       trends = Trends('/tmp/trends.pid')
+   if len(sys.argv) == 2 and sys.argv[1] != 'test':
+       if 'start' == sys.argv[1]:
+           trends.start()
+       elif 'stop' == sys.argv[1]:
+           trends.stop()
+       elif 'restart' == sys.argv[1]:
+           trends.restart()
+       else:
+           print "Unknown command"
+           sys.exit(2)
+       sys.exit(0)

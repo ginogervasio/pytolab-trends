@@ -28,7 +28,7 @@ class Tweets(Daemon):
                             '%(filename)s:(%(lineno)d)] %(levelname)s: ' \
                             '%(message)s'
 
-#        logging.basicConfig(filename='log_tweets.txt', filemode='w+', level=logging.DEBUG)
+        logging.basicConfig(filename='log_tweets.txt', filemode='w+', level=logging.DEBUG)
         Daemon.__init__(self, pid_file)
         self.db = None
         c = config.Config()
@@ -138,7 +138,7 @@ class Listener(tweepy.StreamListener):
         self.tweets = t
 
 if __name__ == "__main__":
-    daemon = Tweets('tweets.pid')
+    daemon = Tweets('/tmp/tweets.pid')
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
             daemon.start()
