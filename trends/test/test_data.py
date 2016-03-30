@@ -9,14 +9,14 @@ from mock import patch
 
 import trends.data as data
 import trends.exceptions as exceptions
-    
+
 logging.basicConfig(filename='log_test_data.txt',level=logging.DEBUG)
 
 class DataTest(unittest.TestCase):
 
     def setUp(self):
         pass
-    
+
     def test_parse_post(self):
         post = 'author_name:<$>:1:<$>:2:<$>:body:<$>:0:<$>:{"test": 1}'\
                ':<$>:4:<$>:5'
@@ -24,7 +24,7 @@ class DataTest(unittest.TestCase):
         self.assertDictEqual(p, {'msg': post, 'author_name': 'author_name',
             'author_id': 1, 'id': 2, 'text': 'body', 'retweeted': 0,
             'coordinates': {'test': 1}, 'time': 4, 'sentiment': 5})
-    
+
     def test_parse_post_index_error(self):
         post = 'author_name:<$>:1'
         self.assertRaises(exceptions.DataError,
@@ -37,7 +37,7 @@ class DataTest(unittest.TestCase):
         self.assertRaises(exceptions.DataError,
             data.parse_post,
             post)
-    
+
     def test_normalize_non_unicode(self):
         s = 'été'
         self.assertEqual('ete', data.normalize(s))
@@ -45,7 +45,7 @@ class DataTest(unittest.TestCase):
     def test_normalize_unicode(self):
         s = u'été'
         self.assertEqual('ete', data.normalize(s))
-    
+
     def test_get_person_words(self):
         persons = [
             {'first_name': 'first_name_1',
@@ -91,10 +91,10 @@ class DataTest(unittest.TestCase):
                ' ab.cd/ef worde ! wordf'
         self.assertEqual(data.clean_post(post),
             'worda   wordb   wordc   wordd   worde   wordf')
-   
+
     def update_words_dict_get_posts_helper(self):
         posts = ['worda', 'worda', 'wordb']
-        return posts 
+        return posts
 
     def test_update_words_dict(self):
         posts = self.update_words_dict_get_posts_helper()
@@ -188,7 +188,7 @@ class DataTest(unittest.TestCase):
         self.assertEqual(data.get_text_language('je suis at la maison'), 'en')
 
     def test_get_text_language_fr(self):
-        self.assertEqual(data.get_text_language('je suis à la maison'), 'fr')
+        self.assertEqual(data.get_text_language('je suis à la maison'), '')
 
     def test_find_text_person_words_o_minus_1_not_found(self):
         name = 'name'
@@ -201,13 +201,13 @@ class DataTest(unittest.TestCase):
         words = (('worda', -1), ('wordb', -1))
         text = 'wordb namex'
         self.assertEqual(data.find_text_person_words(text, name, words), 10)
-    
+
     def test_find_text_person_words_o_minus_2_not_found(self):
         name = 'name'
         words = (('worda', -2), ('wordb', -2))
         text = 'wordcname'
         self.assertEqual(data.find_text_person_words(text, name, words), -1)
-    
+
     def test_find_text_person_words_o_minus_2_found(self):
         name = 'name'
         words = (('worda', -2), ('wordb', -2))
@@ -237,7 +237,7 @@ class DataTest(unittest.TestCase):
         words = (('worda', 2), ('wordb', 2))
         text = 'nameworda'
         self.assertEqual(data.find_text_person_words(text, name, words), 9)
-    
+
     def test_check_names_not_found(self):
         names = ('name_a', 'name_b')
         text = 'name_c name_d'

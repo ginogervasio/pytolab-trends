@@ -166,18 +166,18 @@ class Trends(Daemon):
 if __name__ == "__main__":
     trends = Trends('/tmp/trends.pid')
 #    trends.run()
-   if len(sys.argv) == 2 and sys.argv[1] == 'test':
-       trends = Trends('/tmp/trends.pid', test_trends.Sentiment)
-   else:
-       trends = Trends('/tmp/trends.pid')
-   if len(sys.argv) == 2 and sys.argv[1] != 'test':
-       if 'start' == sys.argv[1]:
-           trends.start()
-       elif 'stop' == sys.argv[1]:
-           trends.stop()
-       elif 'restart' == sys.argv[1]:
-           trends.restart()
-       else:
-           print "Unknown command"
-           sys.exit(2)
-       sys.exit(0)
+    if len(sys.argv) == 2 and sys.argv[1] == 'test':
+        trends = Trends('/tmp/trends.pid', test_trends.Sentiment)
+    else:
+        trends = Trends('/tmp/trends.pid')
+    if len(sys.argv) == 2 and sys.argv[1] != 'test':
+        if 'start' == sys.argv[1]:
+            trends.start()
+        elif 'stop' == sys.argv[1]:
+            trends.stop()
+        elif 'restart' == sys.argv[1]:
+            trends.restart()
+        else:
+            print "Unknown command"
+            sys.exit(2)
+        sys.exit(0)

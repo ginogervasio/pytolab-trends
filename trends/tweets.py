@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from log import logger
+import logging
 import time
 import json
 import sys
