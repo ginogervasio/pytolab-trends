@@ -18,6 +18,8 @@ import db
 from daemon import Daemon
 import mq
 
+import urllib, urllib2
+
 class Trends(Daemon):
     """
     Trends main class
@@ -107,6 +109,23 @@ class Trends(Daemon):
         text = data.normalize(post['text']).lower()
         self.first_person = None
         # check post language
+
+        try:
+            url = "https://translate.yandex.net/api/v1.5/tr.json/translate?key=trnsl.1.1.20160331T033639Z.8ac2657ae86c5f48.a00ba4924e8fc84e53a9521069702d599ebd3663"
+            response = urllib2.urlopen(url + '&' + urllib.urlencode({'text': text.encode('ascii','ignore') }) +'&lang=tl-en') 
+            trans_data = json.loads(response.read())
+
+            print 'translated: "%s"' % str(trans_data['text'][0])
+            text = trans_data['text'][0]
+            print('--------------------------------------------------------------------')
+        except IOError, e:
+            if hasattr(e, 'code'): # HTTPError
+                print 'http error code: ', e.code
+            elif hasattr(e, 'reason'): # URLError
+                print "can't connect, reason: ", e.reason
+            else:
+                raise
+
         if data.get_text_language(text) == 'en':
             persons_found = 0
             person_found = None
@@ -190,8 +209,8 @@ if __name__ == "__main__":
         trends = Trends('/tmp/trends.pid')
     if len(sys.argv) == 2 and sys.argv[1] != 'test':
         if 'start' == sys.argv[1]:
-            trends.run()
-#            trends.start()
+            # trends.run()
+            trends.start()
         elif 'stop' == sys.argv[1]:
             trends.stop()
         elif 'restart' == sys.argv[1]:
@@ -200,3 +219,5 @@ if __name__ == "__main__":
             print "Unknown command"
             sys.exit(2)
         sys.exit(0)
+    else:
+        trends.run()
