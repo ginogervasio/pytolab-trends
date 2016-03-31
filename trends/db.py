@@ -108,7 +108,7 @@ class Db(object):
                 raise exceptions.DbError()
         raise exceptions.DbError()
 
-    def get(self, key, db=0):
+    def get(self, key, db= 0):
         if db == 0:
             return self.redis_cmd('get', key)
         else:

@@ -7,9 +7,10 @@ import redis
 import calendar
 import datetime
 import json
+from log import logger
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import re
 import sys
-from log import logger
 
 import config
 import data
@@ -27,6 +28,7 @@ class Trends(Daemon):
         self.config = c.cfg
 #        self.log = logging.getLogger('trends')
         self.stats_freq = 3600
+        self.sid = SentimentIntensityAnalyzer()
 
     def setup(self):
         """Setup DB connections, message queue consumer and stats."""
@@ -106,6 +108,10 @@ class Trends(Daemon):
         self.first_person = None
         # check post language
         if data.get_text_language(text) == 'en':
+            ss = self.sid.polarity_scores(text)
+            for k in sorted(ss):
+                print text
+                print('{0}: {1}, '.format(k, ss[k]))
             for person in self.persons:
                 names = data.get_names(person)
                 # one more post for this person
@@ -116,6 +122,7 @@ class Trends(Daemon):
                 # add post to person's posts list
                 key = 'person:%d:posts:%d' % (person['id'],
                         self.stats_last_update)
+                print key
                 self.db.rpush(key, post_id)
                 # update stats for this person
                 self.update_person_stats(person)
@@ -125,6 +132,7 @@ class Trends(Daemon):
                     json.dumps(post))
                 # add post id to current hour
                 key = 'posts:%d' % (self.stats_last_update)
+                print key
                 self.db.rpush(key, post_id)
         else:
             logger.debug('possibly another language in %s', text)
@@ -134,7 +142,9 @@ class Trends(Daemon):
         persons.
         """
         key = 'person:%d:posts_count' % (person['id'])
-        v = int(self.db.lindex(key, -1))
+        lindex = self.db.lindex(key, -1)
+        v = int(lindex if lindex else 0)
+        print 'key: %s, lindex: %s' % (key, str(v+1))
         self.db.lset(key, -1, str(v+1))
         if not self.first_person:
             self.first_person = person
@@ -147,6 +157,7 @@ class Trends(Daemon):
             else:
                 d[str(person['id'])] = 1
             self.db.lset(key, -1, json.dumps(d))
+            print 'key: %s, rels: %s' % (key, json.dumps(d))
 
     def fill_stats(self, periods):
         """Fill persons stats with default values.
@@ -172,7 +183,8 @@ if __name__ == "__main__":
         trends = Trends('/tmp/trends.pid')
     if len(sys.argv) == 2 and sys.argv[1] != 'test':
         if 'start' == sys.argv[1]:
-            trends.start()
+            trends.run()
+#            trends.start()
         elif 'stop' == sys.argv[1]:
             trends.stop()
         elif 'restart' == sys.argv[1]:

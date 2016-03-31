@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from log import logger
-import logging
 import time
 import json
 import sys
@@ -14,8 +13,6 @@ import data
 import db
 from daemon import Daemon
 import mq
-
-import pdb
 
 class Tweets(Daemon):
     """
@@ -29,7 +26,7 @@ class Tweets(Daemon):
                             '%(filename)s:(%(lineno)d)] %(levelname)s: ' \
                             '%(message)s'
 
-        logging.basicConfig(filename='log_tweets.txt', filemode='w+', level=logging.DEBUG)
+#        logging.basicConfig(filename='log_tweets.txt', filemode='w+', level=logging.DEBUG)
         Daemon.__init__(self, pid_file)
         self.db = None
         c = config.Config()
@@ -49,6 +46,7 @@ class Tweets(Daemon):
         self.db = db.Db()
         self.db.setup()
         # get latest persons list
+        self.db.set_persons()
         self.persons = self.db.get_persons()
 
     def setup_mq(self):
@@ -80,6 +78,7 @@ class Tweets(Daemon):
         # add names to stream filter
         track_list = [data.normalize(p['name']) for p in self.persons]
         logger.debug('track_list: %s', track_list)
+        print 'track_list: %s' % (track_list)
         while True:
             try:
                 self.stream.filter(track=track_list)
@@ -106,6 +105,7 @@ class Listener(tweepy.StreamListener):
                        'coordinates': status.coordinates,
                        'time': int(time.time())}
             logger.debug(message)
+            print 'author: %s, tweet: %s' % (status.author.screen_name, status.text)
             self.tweets.mq.producer.publish(json.dumps(message), 'posts')
 
     def on_error(self, status_code):
