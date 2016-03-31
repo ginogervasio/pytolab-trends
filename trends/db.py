@@ -196,6 +196,12 @@ class Db(object):
                   'on duplicate key update post=%s'
             self.sql_write(sql, post_id, value, value)
 
+    def add_post(self, post_id, value):
+        """Add post in MySQL
+        """
+        sql = 'insert into tp_post(post_id, post) values(%s, %s)'
+        self.sql_write(sql, post_id, value)
+
     def get_post(self, post_id):
         """Get post value from Redis or MySQL based on posts id marker...
         """
@@ -208,6 +214,12 @@ class Db(object):
             except exceptions.DbError:
                 r = None
         return r
+
+    def set_person_score(self, post_id, person_id, score):
+        """Set the person's sentiment score based on the tweet
+        """
+        sql = 'insert into tp_person_score(post_id, person_id, score) values(%s, %s, %s)'
+        self.sql_write(sql, post_id, person_id, str(score))
 
     def get_persons(self):
         """

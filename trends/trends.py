@@ -5,7 +5,7 @@ import ConfigParser
 import time
 import redis
 import calendar
-import datetime
+from datetime import datetime
 import json
 from log import logger
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
@@ -108,27 +108,35 @@ class Trends(Daemon):
         self.first_person = None
         # check post language
         if data.get_text_language(text) == 'en':
-            ss = self.sid.polarity_scores(text)
-            for k in sorted(ss):
-                print text
-                print('{0}: {1}, '.format(k, ss[k]))
+            persons_found = 0
+            person_found = None
+            post_id = None
             for person in self.persons:
                 names = data.get_names(person)
-                # one more post for this person
-                if not post_add:
-                    post_add = True
-                    # get next post id
-                    post_id = self.db.incr('nextPostId')
-                # add post to person's posts list
-                key = 'person:%d:posts:%d' % (person['id'],
-                        self.stats_last_update)
-                print key
-                self.db.rpush(key, post_id)
-                # update stats for this person
-                self.update_person_stats(person)
+                if data.check_names(names, text, person['words']) == 1:
+                    persons_found = persons_found + 1
+                    person_found = person
+                    # one more post for this person
+                    if not post_add:
+                        post_add = True
+                        # get next post id
+                        post_id = self.db.incr('nextPostId')
+                    # add post to person's posts list
+                    key = 'person:%d:posts:%d' % (person['id'],
+                            self.stats_last_update)
+                    print key
+                    self.db.rpush(key, post_id)
+                    # update stats for this person
+                    self.update_person_stats(person)
+            ss = self.sid.polarity_scores(post['text'])
+            if((float(ss['compound']) > 0.5 or float(ss['compound']) < 0) and persons_found < 2 and person_found):
+                print 'text: %s, sentiment: %f' % (post['text'], ss['compound'])
+                self.db.set_person_score(int(post_id), person_found['id'], float(ss['compound']))
             if post_add:
                 # add post to db
                 self.db.set_post(int(post_id),
+                    json.dumps(post))
+                self.db.add_post(int(post_id),
                     json.dumps(post))
                 # add post id to current hour
                 key = 'posts:%d' % (self.stats_last_update)
@@ -144,7 +152,6 @@ class Trends(Daemon):
         key = 'person:%d:posts_count' % (person['id'])
         lindex = self.db.lindex(key, -1)
         v = int(lindex if lindex else 0)
-        print 'key: %s, lindex: %s' % (key, str(v+1))
         self.db.lset(key, -1, str(v+1))
         if not self.first_person:
             self.first_person = person

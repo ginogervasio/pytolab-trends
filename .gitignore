@@ -2,6 +2,6 @@ pytolabph/
 trends.cfg
 *.txt
 *.*~
-*.pyc
+trends/*.pyc
 
 
