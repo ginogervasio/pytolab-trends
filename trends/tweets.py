@@ -14,6 +14,8 @@ import db
 from daemon import Daemon
 import mq
 
+import urllib, urllib2
+
 class Tweets(Daemon):
     """
     Tweets main class
@@ -27,6 +29,7 @@ class Tweets(Daemon):
                             '%(message)s'
 
 #        logging.basicConfig(filename='log_tweets.txt', filemode='w+', level=logging.DEBUG)
+
         Daemon.__init__(self, pid_file)
         self.db = None
         c = config.Config()
@@ -45,8 +48,9 @@ class Tweets(Daemon):
         # setup db connections
         self.db = db.Db()
         self.db.setup()
-        # get latest persons list
+        # update persons list
         self.db.set_persons()
+        # get latest persons list
         self.persons = self.db.get_persons()
 
     def setup_mq(self):
@@ -66,7 +70,6 @@ class Tweets(Daemon):
             self.config.get('twitter', 'access_token_secret'))
 
         self.stream = tweepy.Stream(auth, listener, timeout=3600)
-
     def run(self):
         self.setup()
         self.stream_filter()
@@ -104,8 +107,25 @@ class Listener(tweepy.StreamListener):
                        'retweeted': status.retweeted,
                        'coordinates': status.coordinates,
                        'time': int(time.time())}
+
             logger.debug(message)
             print 'author: %s, tweet: %s' % (status.author.screen_name, status.text)
+
+            try:
+                url = "https://translate.yandex.net/api/v1.5/tr.json/translate?key=trnsl.1.1.20160331T033639Z.8ac2657ae86c5f48.a00ba4924e8fc84e53a9521069702d599ebd3663"
+                response = urllib2.urlopen(url + '&' + urllib.urlencode({'text': message['text'].encode('ascii','ignore') }) +'&lang=tl-en') 
+                data = json.loads(response.read())
+
+                print 'translated: "%s"' % str(data['text'][0])
+                print('--------------------------------------------------------------------')
+            except IOError, e:
+                if hasattr(e, 'code'): # HTTPError
+                    print 'http error code: ', e.code
+                elif hasattr(e, 'reason'): # URLError
+                    print "can't connect, reason: ", e.reason
+                else:
+                    raise
+
             self.tweets.mq.producer.publish(json.dumps(message), 'posts')
 
     def on_error(self, status_code):
