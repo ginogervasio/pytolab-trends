@@ -198,4 +198,3 @@ def get_str_from_timestamp(ts, short=False):
     else:
         s = d.strftime('%Y-%m-%d %H:%M:%S')
     return s
-

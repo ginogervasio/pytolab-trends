@@ -112,7 +112,7 @@ class Trends(Daemon):
 
         try:
             url = "https://translate.yandex.net/api/v1.5/tr.json/translate?key=trnsl.1.1.20160331T033639Z.8ac2657ae86c5f48.a00ba4924e8fc84e53a9521069702d599ebd3663"
-            response = urllib2.urlopen(url + '&' + urllib.urlencode({'text': text.encode('ascii','ignore') }) +'&lang=tl-en') 
+            response = urllib2.urlopen(url + '&' + urllib.urlencode({'text': text.encode('ascii','ignore') }) +'&lang=tl-en')
             trans_data = json.loads(response.read())
 
             print 'translated: "%s"' % str(trans_data['text'][0])

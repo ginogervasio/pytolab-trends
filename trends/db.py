@@ -236,8 +236,10 @@ class Db(object):
             person['nickname'] = s[3]
             person['group'] = int(s[4])
             person['words'] = json.loads(s[5])
-            person['posts_count'] = 0
-            person['rel'] = {}
+            posts_count = int(self.lindex('person:%d:posts_count' % int(s[0]), -1))
+            person['posts_count'] = (posts_count if posts_count > 0 else 0)
+            rels = self.lindex('person:%d:rel' % int(s[0]), -1)
+            person['rel'] = json.loads((rels if rels else '{}'))
             persons.append(person)
 
         return persons
@@ -275,4 +277,3 @@ class Db(object):
         sql = 'select person_id from tp_person_post where post_id = %s'
         rows = self.sql_read(sql, post_id)
         return [row[0] for row in rows]
-

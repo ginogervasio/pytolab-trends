@@ -1,26 +1,149 @@
 <!DOCTYPE html>
 <html>
+<title>Halalan 2016 - Philippine ElectionsTwitter Statistics</title>
+<meta charset="utf-8">
 <head>
-	<title>Philippine Presidential Candidates Twitter Survey</title>
-	<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
-	<script src="https://code.jquery.com/jquery-2.2.2.min.js"></script>
-	<script type="text/javascript">
-		
-		$(function () {
+<style>
 
-			$.get('/api/persons/', function (persons) {
-				$('#person-list').html('');
-				
-				for (var p in persons) {
-					$('#person-list').append('<li>' + persons[p].name + ' - ' + persons[p].nickname + '</li>')
-				}
-			});
+body {
+  font: 10px sans-serif;
+}
 
-		})
+.chord {
+  fill-opacity: .67;
+  stroke: #000;
+  stroke-width: .5px;
+}
 
-	</script>
+</style>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="https://code.jquery.com/jquery-2.2.2.min.js"></script>
 </head>
 <body>
-	<ul id="person-list"></ul>
+  <div id="chord_diagram"></div>
 </body>
+<script>
+
+var outerRadius = 960 / 2,
+    innerRadius = outerRadius - 130;
+
+var fill = d3.scale.category20c();
+
+var arc = d3.svg.arc()
+    .innerRadius(innerRadius)
+    .outerRadius(innerRadius + 20);
+
+var svg = d3.select("#chord_diagram").append("svg")
+    .attr("width", outerRadius * 2)
+    .attr("height", outerRadius * 2)
+  .append("g")
+    .attr("transform", "translate(" + outerRadius + "," + outerRadius + ")");
+
+function getRandomColor(){
+  var letters = '0123456789ABCDE'.split('');
+  var color = '#';
+  for (var i = 0; i < 6; i++ ) {
+    color += letters[Math.floor(Math.random() * 15)];
+  }
+  return color;
+}
+
+d3.json("/api/persons/", function(error, imports) {
+  if (error) throw error;
+
+  var indexByName = d3.map(),
+      nameByIndex = d3.map(),
+      colorByIndex = d3.map(),
+      matrix = [],
+      n = 0;
+
+  // Compute a unique index for each candidate name.
+  imports.forEach(function(d) {
+    if (!indexByName.has(d = d.name)) {
+      nameByIndex.set(n, d);
+      indexByName.set(d, n++);
+      colorByIndex.set(n, getRandomColor());
+    }
+  });
+
+  // Construct a square matrix counting mentions between candidates.
+  imports.forEach(function(d) {
+    var source = indexByName.get(d.name),
+        row = matrix[source];
+    if (!row) {
+     row = matrix[source] = [];
+     for (var i = -1; ++i < n;) row[i] = 0;
+    }
+    $.each($.parseJSON(JSON.stringify(d.rel)), function(k, v){
+      row[k] = v;
+    });
+  });
+
+  var chord = d3.layout.chord()
+    .padding(.04)
+    .sortSubgroups(d3.descending)
+    .sortChords(d3.descending);
+
+  chord.matrix(matrix);
+
+  var g = svg.selectAll(".group")
+      .data(chord.groups)
+    .enter().append("g")
+      .attr("class", "group");
+
+  g.append("path")
+      .style("fill", function(d) { return colorByIndex.get(d.index); })
+      .style("stroke", function(d) { return colorByIndex.get(d.index); })
+      .attr("d", arc)
+      .on("mouseover", fade(.1))
+      .on("mouseout", fade(1));
+
+  var groupText = g.append("text")
+      .each(function(d) { d.angle = (d.startAngle + d.endAngle) / 2; })
+      .attr("dy", ".35em")
+      .attr("transform", function(d) {
+        return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+            + "translate(" + (innerRadius + 26) + ")"
+            + (d.angle > Math.PI ? "rotate(180)" : "");
+      })
+      .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+      .text(function(d) { return nameByIndex.get(d.index); });
+
+  // Add a mouseover title.
+  g.append("title").text(function(d, i) {
+    return nameByIndex.get(i) + ": " + (d.value) + " total posts";
+  });
+
+  groupText.append("textPath")
+      .attr("xlink:href", function(d, i) { return "#group" + i; })
+      .text(function(d, i) { return nameByIndex.get(i); });
+
+  var chords = svg.selectAll(".chord")
+      .data(chord.chords)
+    .enter().append("path")
+      .attr("class", "chord")
+      .style("stroke", function(d) { return d3.rgb(colorByIndex.get(d.source.index)).darker(); })
+      .style("fill", function(d) { return colorByIndex.get(d.source.index); })
+      .attr("d", d3.svg.chord().radius(innerRadius));
+
+  function fade(opacity) {
+    return function(g, i) {
+      svg.selectAll("path.chord")
+          .filter(function(d) { return d.source.index != i && d.target.index != i; })
+        .transition()
+          .style("opacity", opacity);
+    };
+  }
+
+    // Add an elaborate mouseover title for each chord.
+  chords.append("title").text(function(d) {
+    return nameByIndex.get(d.source.index)
+        + " ⇔ " + nameByIndex.get(d.target.index)
+        + ": " + d.source.value + " tweets";
+  });
+});
+
+d3.select(self.frameElement).style("height", outerRadius * 2 + "px");
+
+</script>
 </html>
