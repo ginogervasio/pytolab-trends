@@ -105,7 +105,7 @@ class Listener(tweepy.StreamListener):
                        'id': status.id,
                        'text': status.text,
                        'retweeted': status.retweeted,
-                       'coordinates': status.coordinates,
+                       'coordinates': status.geo,
                        'time': int(time.time())}
 
             logger.debug(message)

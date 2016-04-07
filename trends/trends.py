@@ -4,7 +4,6 @@
 import ConfigParser
 import time
 import redis
-import calendar
 from datetime import datetime
 import json
 from log import logger
@@ -17,8 +16,6 @@ import data
 import db
 from daemon import Daemon
 import mq
-
-import urllib, urllib2
 
 class Trends(Daemon):
     """

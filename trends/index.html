@@ -9,21 +9,45 @@ body {
   font: 10px sans-serif;
 }
 
+/* For the chord diagram */
 .chord {
   fill-opacity: .67;
   stroke: #000;
   stroke-width: .5px;
 }
 
+/* For the bar graph */
+.axis {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
 </style>
 <script src="//d3js.org/d3.v3.min.js"></script>
-<script src="https://code.jquery.com/jquery-2.2.2.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+<!--script src="https://code.jquery.com/jquery-2.2.2.min.js"></script-->
 </head>
 <body>
-  <div id="chord_diagram"></div>
+  <div id="barGraph"></div>
+  <div id="chordDiagram"></div>
 </body>
 <script>
+/* Binay, Mar, Poe, Miriam, Duterte, Gringo, Leni, Chiz, Bongbong, Cayetano */
+var colors = ['#ffa500', '#f2f238', '#add8e6', '#ff0000', '#98fb98', '#551a8b', '#000000', '#ff69b4', '#f4a460', '#008080'];
 
+</script>
+<script>
+/* For the chord diagram */
 var outerRadius = 960 / 2,
     innerRadius = outerRadius - 130;
 
@@ -33,27 +57,16 @@ var arc = d3.svg.arc()
     .innerRadius(innerRadius)
     .outerRadius(innerRadius + 20);
 
-var svg = d3.select("#chord_diagram").append("svg")
-    .attr("width", outerRadius * 2)
-    .attr("height", outerRadius * 2)
-  .append("g")
-    .attr("transform", "translate(" + outerRadius + "," + outerRadius + ")");
+function drawChord(imports) {
 
-function getRandomColor(){
-  var letters = '0123456789ABCDE'.split('');
-  var color = '#';
-  for (var i = 0; i < 6; i++ ) {
-    color += letters[Math.floor(Math.random() * 15)];
-  }
-  return color;
-}
-
-d3.json("/api/persons/", function(error, imports) {
-  if (error) throw error;
+  var csvg = d3.select("#chordDiagram").append("svg")
+      .attr("width", outerRadius * 2)
+      .attr("height", outerRadius * 2)
+    .append("g")
+      .attr("transform", "translate(" + outerRadius + "," + outerRadius + ")");
 
   var indexByName = d3.map(),
       nameByIndex = d3.map(),
-      colorByIndex = d3.map(),
       matrix = [],
       n = 0;
 
@@ -62,7 +75,6 @@ d3.json("/api/persons/", function(error, imports) {
     if (!indexByName.has(d = d.name)) {
       nameByIndex.set(n, d);
       indexByName.set(d, n++);
-      colorByIndex.set(n, getRandomColor());
     }
   });
 
@@ -86,14 +98,14 @@ d3.json("/api/persons/", function(error, imports) {
 
   chord.matrix(matrix);
 
-  var g = svg.selectAll(".group")
+  var g = csvg.selectAll(".group")
       .data(chord.groups)
     .enter().append("g")
       .attr("class", "group");
 
   g.append("path")
-      .style("fill", function(d) { return colorByIndex.get(d.index); })
-      .style("stroke", function(d) { return colorByIndex.get(d.index); })
+      .style("fill", function(d) { return colors[d.index]; })
+      .style("stroke", function(d) { return colors[d.index]; })
       .attr("d", arc)
       .on("mouseover", fade(.1))
       .on("mouseout", fade(1));
@@ -111,24 +123,24 @@ d3.json("/api/persons/", function(error, imports) {
 
   // Add a mouseover title.
   g.append("title").text(function(d, i) {
-    return nameByIndex.get(i) + ": " + (d.value) + " total posts";
+    return nameByIndex.get(i) + ": " + (d.value) + " total posts with other candidates";
   });
 
   groupText.append("textPath")
       .attr("xlink:href", function(d, i) { return "#group" + i; })
       .text(function(d, i) { return nameByIndex.get(i); });
 
-  var chords = svg.selectAll(".chord")
+  var chords = csvg.selectAll(".chord")
       .data(chord.chords)
     .enter().append("path")
       .attr("class", "chord")
-      .style("stroke", function(d) { return d3.rgb(colorByIndex.get(d.source.index)).darker(); })
-      .style("fill", function(d) { return colorByIndex.get(d.source.index); })
+      .style("stroke", function(d) { return d3.rgb(colors[d.source.index]).darker(); })
+      .style("fill", function(d) { return colors[d.source.index]; })
       .attr("d", d3.svg.chord().radius(innerRadius));
 
   function fade(opacity) {
     return function(g, i) {
-      svg.selectAll("path.chord")
+      csvg.selectAll("path.chord")
           .filter(function(d) { return d.source.index != i && d.target.index != i; })
         .transition()
           .style("opacity", opacity);
@@ -141,9 +153,91 @@ d3.json("/api/persons/", function(error, imports) {
         + " ⇔ " + nameByIndex.get(d.target.index)
         + ": " + d.source.value + " tweets";
   });
-});
+}
 
 d3.select(self.frameElement).style("height", outerRadius * 2 + "px");
 
+</script>
+<script>
+/* For the bar graph */
+
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var x = d3.scale.ordinal()
+    .rangeRoundBands([0, width], .1);
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+    .ticks(10);
+
+function drawBar(data) {
+
+  var bsvg = d3.select("#barGraph").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  x.domain(data.map(function(d) { return d.name; }));
+  y.domain([0, d3.max(data, function(d) { return d.posts_count; })]);
+
+  bsvg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  bsvg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Tweets");
+
+  bsvg.selectAll(".bar")
+      .data(data)
+    .enter().append("rect")
+      .attr("class", "bar")
+      .attr("x", function(d) { return x(d.name); })
+      .attr("width", x.rangeBand())
+      .attr("y", function(d) { return y(d.posts_count); })
+      .attr("height", function(d) { return height - y(d.posts_count); })
+      .style("fill", function(d) { return colors[d.id]; })
+      .on("mouseover", fade(.1))
+      .on("mouseout", fade(1))
+      .append("title").text(function(d){
+        return d.name + ": " + d.posts_count + " total tweets";
+      });
+
+  function fade(opacity) {
+    return function(g, i) {
+      bsvg.selectAll("rect.bar")
+          .filter(function(d) { return d.id != i; })
+        .transition()
+          .style("opacity", opacity);
+    };
+  }
+}
+</script>
+<script>
+var ws = new WebSocket("ws://localhost:8888/ws");
+ws.onmessage = function(evt) {
+  d3.select("#chordDiagram").selectAll("svg").remove();
+  d3.select("#barGraph").selectAll("svg").remove();
+  drawChord(JSON.parse(evt.data));
+  drawBar(JSON.parse(evt.data));
+};
 </script>
 </html>
