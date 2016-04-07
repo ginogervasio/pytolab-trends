@@ -236,7 +236,8 @@ class Db(object):
             person['nickname'] = s[3]
             person['group'] = int(s[4])
             person['words'] = json.loads(s[5])
-            posts_count = int(self.lindex('person:%d:posts_count' % int(s[0]), -1))
+            pc = self.lindex('person:%d:posts_count' % int(s[0]), -1)
+            posts_count = int((pc if pc else 0))
             person['posts_count'] = (posts_count if posts_count > 0 else 0)
             rels = self.lindex('person:%d:rel' % int(s[0]), -1)
             person['rel'] = json.loads((rels if rels else '{}'))
