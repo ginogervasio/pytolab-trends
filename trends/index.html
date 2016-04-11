@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.5.1/rickshaw.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
 <head>
 <style>
 
@@ -33,15 +34,17 @@ body {
 .x.axis path {
   display: none;
 }
-
+.y_axis{
+  height: 600px !important;
+}
 /* Time series graph */
 #sentimentContainer {
-        display: inline-block;
-        font-family: Arial, Helvetica, sans-serif;
+      display: inline-block;
+      font-family: Arial, Helvetica, sans-serif;
 
 }
 #sentimentGraph {
-        float: left;
+      float: left;
 }
 #y_axis {
         float: left;
@@ -70,33 +73,56 @@ var colors = ['#ffa500', '#f2f238', '#add8e6', '#ff0000', '#98fb98', '#551a8b', 
 </script>
 </head>
 <body>
-  <h1>Sentiment scores per candidate</h1>
-  <div id="sentimentContainer">
-    <div id="y_axis"></div>
-    <div id="sentimentGraph"></div>
-    <div id="legend"></div><br><br>
-    <form id="offset_form" class="toggler">
-      <input type="radio" name="offset" id="lines" value="lines" checked>
-      <label class="lines" for="lines">lines</label><br>
-      <input type="radio" name="offset" id="stack" value="zero">
-      <label class="stack" for="stack">stack</label>
-    </form>
-    <p>Running live graph of sentiment scores per candidate</p>
+<div class="container">
+  <div class="row">
+    <p>&nbsp;</p>
+      <div class="panel panel-default">
+        <div class="panel-heading"><h3>Sentiment scores per candidate</h3></div>
+        <div class="panel-body">
+          <div class="alert alert-info" role="alert">Running live graph of sentiment scores per candidate</div>
+          <div id="sentimentContainer">
+            <div id="y_axis"></div>
+            <div id="sentimentGraph" ></div>
+            <div id="legend"></div><br><br>
+            <form id="offset_form" class="toggler">
+              <input type="radio" name="offset" id="lines" value="lines" checked>
+              <label class="lines" for="lines">lines</label><br>
+              <input type="radio" name="offset" id="stack" value="zero">
+              <label class="stack" for="stack">stack</label>
+            </form>  
+          </div>
+        </div>
+      </div>
   </div>
-
-  <h1>Tweet volume per candidate</h1>
-  <div id="barGraph"></div>
-  <p>Hover over the graph to see total volume processed per candidate</p>
-
-  <h1>Candidates mentioned in the same tweet</h1>
-  <div id="chordDiagram"></div>
-  <p>Hover over an edge to see how many tweets relate two candidates</p>
-  <br><br>
-  <h1>Live Tweets</h1>
-  <div id="live-tweets">
-    <ul></ul>  
+  <div class="row">
+    <div class="panel panel-default">
+        <div class="panel-heading"><h3>Tweet volume per candidate</h3></div>
+        <div class="panel-body">
+          <div class="alert alert-info" role="alert">Hover over the graph to see total volume processed per candidate</div>
+          <div id="barGraph"></div>
+        </div>
+    </div>
   </div>
-  
+  <div class="row">
+    <div class="panel panel-default">
+        <div class="panel-heading"><h3>Candidates mentioned in the same tweet</h3></div>
+        <div class="panel-body">
+          <div class="alert alert-info" role="alert">Hover over an edge to see how many tweets relate two candidates</div>
+          <div id="chordDiagram"></div>
+        </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="panel panel-default">
+        <div class="panel-heading"><h3>Live Tweets</h3></div>
+        <div class="panel-body">
+          <div id="live-tweets">
+            <ul class="list-group"></ul>  
+          </div>  
+        </div>
+  </div>
+  </div>
+</div>
 </body>
 <script>
 /* For the chord diagram */
@@ -399,7 +425,7 @@ ws.onmessage = function(evt) {
   drawBar(d.persons);
   updateGraph(d.persons);
   if (d.tweet) {
-    $('#live-tweets ul').append('<li>' + d.tweet + '</li>')
+    $('#live-tweets ul').append('<li class="list-group-item">' + d.tweet + '</li>')
   }
 };
 </script>
