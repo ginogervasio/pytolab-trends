@@ -36,17 +36,15 @@ body {
 
 /* Time series graph */
 #sentimentContainer {
-        position: relative;
+        display: inline-block;
         font-family: Arial, Helvetica, sans-serif;
+
 }
 #sentimentGraph {
-        position: relative;
-        left: 40px;
+        float: left;
 }
 #y_axis {
-        position: absolute;
-        top: 0;
-        bottom: 0;
+        float: left;
         width: 40px;
 }
 #legend {
@@ -57,6 +55,10 @@ body {
         float: left;
         margin: 2em 0 0 15px;
         font-size: 13px;
+}
+#live-tweets {
+  height: 200px;
+  overflow-y: scroll;
 }
 </style>
 <script src="//d3js.org/d3.v3.min.js"></script>
@@ -72,7 +74,7 @@ var colors = ['#ffa500', '#f2f238', '#add8e6', '#ff0000', '#98fb98', '#551a8b', 
   <div id="sentimentContainer">
     <div id="y_axis"></div>
     <div id="sentimentGraph"></div>
-    <div id="legend"></div>
+    <div id="legend"></div><br><br>
     <form id="offset_form" class="toggler">
       <input type="radio" name="offset" id="lines" value="lines" checked>
       <label class="lines" for="lines">lines</label><br>
@@ -89,7 +91,12 @@ var colors = ['#ffa500', '#f2f238', '#add8e6', '#ff0000', '#98fb98', '#551a8b', 
   <h1>Candidates mentioned in the same tweet</h1>
   <div id="chordDiagram"></div>
   <p>Hover over an edge to see how many tweets relate two candidates</p>
-
+  <br><br>
+  <h1>Live Tweets</h1>
+  <div id="live-tweets">
+    <ul></ul>  
+  </div>
+  
 </body>
 <script>
 /* For the chord diagram */
@@ -388,9 +395,12 @@ ws.onmessage = function(evt) {
   d3.select("#chordDiagram").selectAll("svg").remove();
   d3.select("#barGraph").selectAll("svg").remove();
   var d = JSON.parse(evt.data);
-  drawChord(d);
-  drawBar(d);
-  updateGraph(d);
+  drawChord(d.persons);
+  drawBar(d.persons);
+  updateGraph(d.persons);
+  if (d.tweet) {
+    $('#live-tweets ul').append('<li>' + d.tweet + '</li>')
+  }
 };
 </script>
 </html>

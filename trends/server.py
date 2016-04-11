@@ -153,7 +153,7 @@ def process_post(post):
                         stats_last_update)
                 db.rpush(key, post_id)
                 # update stats for this person
-                update_person_stats(person)
+                update_person_stats(person, text)
                 ss = sid.polarity_scores(post['text'])
                 if((float(ss['compound']) > 0.5 or float(ss['compound']) < 0) and persons_found < 2 and person_found):
                     logging.debug('orig_text: %s - translated: %s - sentiment: %f' % (orig_text, post['text'], ss['compound']))
@@ -170,7 +170,7 @@ def process_post(post):
         else:
             logging.debug('possibly another language in %s', text)
 
-def update_person_stats(person):
+def update_person_stats(person, tweet):
     """Increment person's post count. Update dict of relations with other
     persons.
     """
@@ -191,8 +191,11 @@ def update_person_stats(person):
             d[str(person['id'])] = 1
         db.lset(key, -1, json.dumps(d))
         logging.debug('key: %s, rels: %s' % (key, json.dumps(d)))
+
+    persons = db.get_persons()
+    tweet = tweet.replace("'", '')
     for itm in clients:
-        itm.write_message(str(db.get_persons()).replace("'",'"').replace('u\"', '"'))
+        itm.write_message(str({ 'tweet': tweet, 'persons': persons }).replace("'",'"').replace('u\"', '"'))
 
 def fill_stats(periods):
     """Fill persons stats with default values.
@@ -215,7 +218,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         logging.info('WebSocket opened')
         clients.append(self)
-        self.write_message(str(db.get_persons()).replace("'",'"').replace('u\"', '"'))
+        self.write_message(str({ 'persons': db.get_persons() }).replace("'",'"').replace('u\"', '"'))
 
     def on_close(self):
         logging.info('WebSocket closed')
