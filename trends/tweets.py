@@ -69,6 +69,7 @@ class Tweets(Daemon):
             self.config.get('twitter', 'access_token_secret'))
 
         self.stream = tweepy.Stream(auth, listener, timeout=3600)
+
     def run(self):
 
         self.setup()

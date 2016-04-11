@@ -113,9 +113,11 @@ def process_post(post):
     Process post received from the message queue.
     """
     # is this a post matching one or more persons?
+    global first_person
     post_add = False
     text = data.normalize(post['text']).lower()
     orig_text = text
+    first_person = None
     # check post language
 
     try:
@@ -152,7 +154,7 @@ def process_post(post):
                         stats_last_update)
                 db.rpush(key, post_id)
                 # update stats for this person
-                
+
                 ss = sid.polarity_scores(post['text'])
                 if((float(ss['compound']) > 0.5 or float(ss['compound']) < 0) and persons_found < 2 and person_found):
                     logging.debug('orig_text: %s - translated: %s - sentiment: %f' % (orig_text, post['text'], ss['compound']))
