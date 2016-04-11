@@ -88,7 +88,11 @@ def run():
     to consume.
     """
     setup()
-    mq.consumer.wait()
+    try:
+        mq.consumer.wait()
+    except Exception:
+        logging.error('AMQP exception consumer waiting error')
+        pass
 
 def message_callback(message):
     """This is called when a new message arrives.

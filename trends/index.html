@@ -2,6 +2,8 @@
 <html>
 <title>Halalan 2016 - Philippine ElectionsTwitter Statistics</title>
 <meta charset="utf-8">
+<link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.5.1/rickshaw.min.css">
 <head>
 <style>
 
@@ -32,20 +34,63 @@ body {
   display: none;
 }
 
+/* Time series graph */
+#sentimentContainer {
+        position: relative;
+        font-family: Arial, Helvetica, sans-serif;
+}
+#sentimentGraph {
+        position: relative;
+        left: 40px;
+}
+#y_axis {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 40px;
+}
+#legend {
+        float: left;
+        margin-left: 15px;
+}
+#offset_form {
+        float: left;
+        margin: 2em 0 0 15px;
+        font-size: 13px;
+}
 </style>
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
-<!--script src="https://code.jquery.com/jquery-2.2.2.min.js"></script-->
-</head>
-<body>
-  <div id="barGraph"></div>
-  <div id="chordDiagram"></div>
-</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.5.1/rickshaw.js"></script>
 <script>
 /* Binay, Mar, Poe, Miriam, Duterte, Gringo, Leni, Chiz, Bongbong, Cayetano */
 var colors = ['#ffa500', '#f2f238', '#add8e6', '#ff0000', '#98fb98', '#551a8b', '#000000', '#ff69b4', '#f4a460', '#008080'];
-
 </script>
+</head>
+<body>
+  <h1>Sentiment scores per candidate</h1>
+  <div id="sentimentContainer">
+    <div id="y_axis"></div>
+    <div id="sentimentGraph"></div>
+    <div id="legend"></div>
+    <form id="offset_form" class="toggler">
+      <input type="radio" name="offset" id="lines" value="lines" checked>
+      <label class="lines" for="lines">lines</label><br>
+      <input type="radio" name="offset" id="stack" value="zero">
+      <label class="stack" for="stack">stack</label>
+    </form>
+    <p>Running live graph of sentiment scores per candidate</p>
+  </div>
+
+  <h1>Tweet volume per candidate</h1>
+  <div id="barGraph"></div>
+  <p>Hover over the graph to see total volume processed per candidate</p>
+
+  <h1>Candidates mentioned in the same tweet</h1>
+  <div id="chordDiagram"></div>
+  <p>Hover over an edge to see how many tweets relate two candidates</p>
+
+</body>
 <script>
 /* For the chord diagram */
 var outerRadius = 960 / 2,
@@ -157,8 +202,6 @@ function drawChord(imports) {
 
 d3.select(self.frameElement).style("height", outerRadius * 2 + "px");
 
-</script>
-<script>
 /* For the bar graph */
 
 var margin = {top: 20, right: 20, bottom: 30, left: 40},
@@ -232,12 +275,122 @@ function drawBar(data) {
 }
 </script>
 <script>
+var seriesData = [ [], [], [], [], [], [], [], [], [], [] ];
+for (var i = 0; i < 10; i++) {
+  seriesData[i].push({x: new Date().getTime(), y: 0});
+}
+
+var graph = new Rickshaw.Graph( {
+  element: document.getElementById("sentimentGraph"),
+  min: 'auto',
+  width: 900,
+  height: 500,
+  renderer: 'line',
+  stroke: true,
+  preserve: true,
+  series: [
+    {
+      color: colors[0],
+      data: seriesData[0],
+      name: 'Jejomar Binay'
+    }, {
+      color: colors[1],
+      data: seriesData[1],
+      name: 'Mar Roxas'
+    }, {
+      color: colors[2],
+      data: seriesData[2],
+      name: 'Grace Poe'
+    }, {
+      color: colors[3],
+      data: seriesData[3],
+      name: 'Miriam Santiago'
+    }, {
+      color: colors[4],
+      data: seriesData[4],
+      name: 'Rodrigo Duterte'
+    }, {
+      color: colors[5],
+      data: seriesData[5],
+      name: 'Gringo Honasan'
+    }, {
+      color: colors[6],
+      data: seriesData[6],
+      name: 'Leni Robredo'
+    }, {
+      color: colors[7],
+      data: seriesData[7],
+      name: 'Francis Escudero'
+    }, {
+      color: colors[8],
+      data: seriesData[8],
+      name: 'Bongbong Marcos'
+    }, {
+      color: colors[9],
+      data: seriesData[9],
+      name: 'Alan Peter Cayetano'
+    }
+  ]
+} );
+
+
+var x_axis = new Rickshaw.Graph.Axis.Time( { graph: graph } );
+var y_axis = new Rickshaw.Graph.Axis.Y( {
+        graph: graph,
+        orientation: 'left',
+        tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+        element: document.getElementById('y_axis'),
+} );
+
+var legend = new Rickshaw.Graph.Legend( {
+        element: document.querySelector('#legend'),
+        graph: graph
+} );
+
+graph.render();
+
+function updateGraph(data){
+  data.forEach(function(d){
+    seriesData[d.id].push({ x: new Date().getTime(), y: d.sentiment });
+    console.log('name: ' + d.name + 'sentiment: '+d.sentiment);
+  });
+  graph.update();
+}
+
+var offsetForm = document.getElementById('offset_form');
+
+offsetForm.addEventListener('change', function(e) {
+        var offsetMode = e.target.value;
+
+        if (offsetMode == 'lines') {
+                graph.setRenderer('line');
+                graph.offset = 'zero';
+        } else {
+                graph.setRenderer('stack');
+                graph.offset = offsetMode;
+        }
+        graph.render();
+
+}, false);
+
+
+var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+  graph: graph,
+  xFormatter: function(x) {
+    return new Date().toString();
+  }
+} );
+
+</script>
+<script>
 var ws = new WebSocket("ws://localhost:8888/ws");
 ws.onmessage = function(evt) {
   d3.select("#chordDiagram").selectAll("svg").remove();
   d3.select("#barGraph").selectAll("svg").remove();
-  drawChord(JSON.parse(evt.data));
-  drawBar(JSON.parse(evt.data));
+  var d = JSON.parse(evt.data);
+  drawChord(d);
+  drawBar(d);
+  updateGraph(d);
 };
 </script>
 </html>

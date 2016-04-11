@@ -85,10 +85,7 @@ class Consumer(object):
         Wait for activity on the channel.
         """
         while True:
-            try:
-                self.channel.wait()
-            except Exception:
-                pass
+            self.channel.wait()
 
     def add_consumer(self, callback, queue_name=None, consumer_tag='callback'):
         """
