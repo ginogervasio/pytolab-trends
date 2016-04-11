@@ -26,9 +26,9 @@ class MQ(object):
                                         routing_key='posts')
             self.callback = callback
             self.consumer.add_consumer(self.msg_callback)
-        except amqp.AMQPException:
+        except amqp.AMQPException as e:
             self.log.error('Error configuring the consumer')
-            raise exceptions.MQError()
+            raise e
 
     def init_producer(self):
         """Initialize a producer to publish messages."""
@@ -37,9 +37,9 @@ class MQ(object):
                 self.config.get('rabbitmq', 'host'),
                 self.config.get('rabbitmq', 'userid'),
                 self.config.get('rabbitmq', 'password'))
-        except amqp.AMQPException:
+        except amqp.AMQPException as e:
             self.log.error('Error configuring the producer')
-            raise exceptions.MQError()
+            raise e
 
     def msg_callback(self, message):
         self.consumer.channel.basic_ack(message.delivery_tag)
