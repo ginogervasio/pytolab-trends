@@ -197,7 +197,7 @@ def update_person_stats(person, tweet):
         logging.debug('key: %s, rels: %s' % (key, json.dumps(d)))
 
     persons = db.get_persons()
-    tweet = tweet.replace("'", '').replace('"', '\"')
+    tweet = tweet.replace("'", '').replace('"', '')
     for itm in clients:
         itm.write_message(str({ 'tweet': tweet, 'persons': persons }).replace("'",'"').replace('u\"', '"'))
 
