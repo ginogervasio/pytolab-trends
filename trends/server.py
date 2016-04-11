@@ -149,12 +149,12 @@ def process_post(post):
                 db.rpush(key, post_id)
                 # update stats for this person
                 update_person_stats(person)
-        ss = sid.polarity_scores(post['text'])
-        if((float(ss['compound']) > 0.5 or float(ss['compound']) < 0) and persons_found < 2 and person_found):
-            logging.debug('orig_text: %s - translated: %s - sentiment: %f' % (orig_text, post['text'], ss['compound']))
-            db.set_person_score(int(post_id), person_found['id'], float(ss['compound']))
-            key = 'person:%d:sentiment' % (person['id'])
-            db.rpush(key, float(ss['compound']))
+                ss = sid.polarity_scores(post['text'])
+                if((float(ss['compound']) > 0.5 or float(ss['compound']) < 0) and persons_found < 2 and person_found):
+                    logging.debug('orig_text: %s - translated: %s - sentiment: %f' % (orig_text, post['text'], ss['compound']))
+                    db.set_person_score(int(post_id), person_found['id'], float(ss['compound']))
+                    key = 'person:%d:sentiment' % (person['id'])
+                    db.rpush(key, float(ss['compound']))
         if post_add:
             # add post to db
             db.set_post(int(post_id), json.dumps(post))

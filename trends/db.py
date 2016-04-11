@@ -241,6 +241,8 @@ class Db(object):
             person['posts_count'] = (posts_count if posts_count > 0 else 0)
             rels = self.lindex('person:%d:rel' % int(s[0]), -1)
             person['rel'] = json.loads((rels if rels else '{}'))
+            sentiment = self.lindex('person:%d:sentiment' % int(s[0]), -1)
+            person['sentiment'] = float((sentiment if sentiment else 0))
             persons.append(person)
 
         return persons

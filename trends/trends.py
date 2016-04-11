@@ -144,10 +144,10 @@ class Trends(Daemon):
                     self.db.rpush(key, post_id)
                     # update stats for this person
                     self.update_person_stats(person)
-            ss = self.sid.polarity_scores(post['text'])
-            if((float(ss['compound']) > 0.5 or float(ss['compound']) < 0) and persons_found < 2 and person_found):
-                print 'text: %s, sentiment: %f' % (post['text'], ss['compound'])
-                self.db.set_person_score(int(post_id), person_found['id'], float(ss['compound']))
+                    ss = self.sid.polarity_scores(post['text'])
+                    if((float(ss['compound']) > 0.5 or float(ss['compound']) < 0) and persons_found < 2 and person_found):
+                        print 'text: %s, sentiment: %f' % (post['text'], ss['compound'])
+                        self.db.set_person_score(int(post_id), person_found['id'], float(ss['compound']))
             if post_add:
                 # add post to db
                 self.db.set_post(int(post_id),
