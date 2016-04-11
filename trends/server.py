@@ -91,7 +91,7 @@ def run():
     try:
         mq.consumer.wait()
     except Exception:
-        logging.error('AMQP exception consumer waiting error')
+        logging.error('AMQP exception consumer error')
         mq.consumer.close()
         setup_mq()
 
