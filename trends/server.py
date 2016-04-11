@@ -115,7 +115,7 @@ def process_post(post):
     # is this a post matching one or more persons?
     post_add = False
     text = data.normalize(post['text']).lower()
-    orig_text = ''
+    orig_text = text
     # check post language
 
     try:
@@ -123,7 +123,6 @@ def process_post(post):
         response = urllib2.urlopen(url + '&' + urllib.urlencode({'text': text.encode('ascii','ignore') }) +'&lang=tl-en')
         trans_data = json.loads(response.read())
 
-        orig_text = text
         text = trans_data['text'][0]
         logging.debug('text: %s - translated: "%s"' % (orig_text, str(trans_data['text'][0])))
     except IOError, e:
@@ -153,13 +152,18 @@ def process_post(post):
                         stats_last_update)
                 db.rpush(key, post_id)
                 # update stats for this person
-                update_person_stats(person, text)
+                
                 ss = sid.polarity_scores(post['text'])
                 if((float(ss['compound']) > 0.5 or float(ss['compound']) < 0) and persons_found < 2 and person_found):
                     logging.debug('orig_text: %s - translated: %s - sentiment: %f' % (orig_text, post['text'], ss['compound']))
                     db.set_person_score(int(post_id), person_found['id'], float(ss['compound']))
                     key = 'person:%d:sentiment' % (person['id'])
                     db.rpush(key, float(ss['compound']))
+
+                tweet = orig_text;
+                if 'compound' in ss:
+                    tweet += ' -s- ' + person['name'] + ':' + str(float(ss['compound']))
+                update_person_stats(person, tweet)
         if post_add:
             # add post to db
             db.set_post(int(post_id), json.dumps(post))
@@ -193,7 +197,7 @@ def update_person_stats(person, tweet):
         logging.debug('key: %s, rels: %s' % (key, json.dumps(d)))
 
     persons = db.get_persons()
-    tweet = tweet.replace("'", '')
+    tweet = tweet.replace("'", '').replace('"', '\"')
     for itm in clients:
         itm.write_message(str({ 'tweet': tweet, 'persons': persons }).replace("'",'"').replace('u\"', '"'))
 
