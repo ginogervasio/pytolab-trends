@@ -201,7 +201,7 @@ def update_person_stats(person, tweet):
     persons = db.get_persons()
     tweet = tweet.replace("'", '').replace('"', '')
     for itm in clients:
-        itm.write_message(str({ 'tweet': tweet, 'persons': persons }).replace("'",'"').replace('u\"', '"'))
+        itm.write_message(str({ 'tweet': tweet.encode('ascii',errors='ignore'), 'persons': persons }).replace("'",'"').replace('u\"', '"'))
 
 def fill_stats(periods):
     """Fill persons stats with default values.

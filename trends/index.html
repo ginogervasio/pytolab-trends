@@ -77,7 +77,7 @@ var colors = ['#ffa500', '#f2f238', '#add8e6', '#ff0000', '#98fb98', '#551a8b', 
   <div class="row">
     <p>&nbsp;</p>
       <div class="panel panel-default">
-        <div class="panel-heading"><h3>Sentiment scores per candidate</h3></div>
+        <div class="panel-heading"><h3><a id="#sentiment">Sentiment scores per candidate</a></h3></div>
         <div class="panel-body">
           <div class="alert alert-info" role="alert">Running live graph of sentiment scores per candidate</div>
           <div id="sentimentContainer">
@@ -96,7 +96,7 @@ var colors = ['#ffa500', '#f2f238', '#add8e6', '#ff0000', '#98fb98', '#551a8b', 
   </div>
   <div class="row">
     <div class="panel panel-default">
-        <div class="panel-heading"><h3>Tweet volume per candidate</h3></div>
+        <div class="panel-heading"><h3><a id="#tweets">Tweet volume per candidate</a></h3></div>
         <div class="panel-body">
           <div class="alert alert-info" role="alert">Hover over the graph to see total volume processed per candidate</div>
           <div id="barGraph"></div>
@@ -105,7 +105,7 @@ var colors = ['#ffa500', '#f2f238', '#add8e6', '#ff0000', '#98fb98', '#551a8b', 
   </div>
   <div class="row">
     <div class="panel panel-default">
-        <div class="panel-heading"><h3>Candidates mentioned in the same tweet</h3></div>
+        <div class="panel-heading"><h3><a id="#relation">Candidates mentioned in the same tweet</h3></a></div>
         <div class="panel-body">
           <div class="alert alert-info" role="alert">Hover over an edge to see how many tweets relate two candidates</div>
           <div id="chordDiagram"></div>
@@ -114,7 +114,7 @@ var colors = ['#ffa500', '#f2f238', '#add8e6', '#ff0000', '#98fb98', '#551a8b', 
   </div>
   <div class="row">
     <div class="panel panel-default">
-        <div class="panel-heading"><h3>Live Tweets</h3></div>
+        <div class="panel-heading"><h3><a id="#livetweets">Live Tweets</a></h3></div>
         <div class="panel-body">
           <div id="live-tweets">
             <ul class="list-group"></ul>  
@@ -385,7 +385,7 @@ graph.render();
 function updateGraph(data){
   data.forEach(function(d){
     seriesData[d.id].push({ x: new Date().getTime(), y: d.sentiment });
-    console.log('name: ' + d.name + 'sentiment: '+d.sentiment);
+    // console.log('name: ' + d.name + 'sentiment: '+d.sentiment);
   });
   graph.update();
 }
@@ -420,12 +420,18 @@ var ws = new WebSocket("ws://localhost:8888/ws");
 ws.onmessage = function(evt) {
   d3.select("#chordDiagram").selectAll("svg").remove();
   d3.select("#barGraph").selectAll("svg").remove();
-  var d = JSON.parse(evt.data);
-  drawChord(d.persons);
-  drawBar(d.persons);
-  updateGraph(d.persons);
-  if (d.tweet) {
-    $('#live-tweets ul').append('<li class="list-group-item">' + d.tweet + '</li>')
+  try {
+    var d = JSON.parse(evt.data);
+    if (d && d.persons) {
+      drawChord(d.persons);
+      drawBar(d.persons);
+      updateGraph(d.persons);
+      if (d.tweet) {
+        $('#live-tweets ul').append('<li class="list-group-item">' + d.tweet + '</li>')
+      }
+    }
+  } catch (e) {
+    console.log(evt.data);
   }
 };
 </script>
