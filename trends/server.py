@@ -39,7 +39,6 @@ def setup():
     """Setup DB connections, message queue consumer and stats."""
     setup_db()
     setup_mq()
-    update_stats()
 
 def setup_db():
     """Setup DB connections, get initial data from DB."""
@@ -55,9 +54,14 @@ def setup_db():
     if not db.exists(key):
         db.set(key, 0)
 
+def _setup_mq():
+    """Setup message queue consumer and update_stats."""
+    mq.init_consumer(message_callback)
+
 def setup_mq():
     """Setup message queue consumer."""
-    mq.init_consumer(message_callback)
+    _setup_mq()
+    update_stats()
 
 def update_stats():
     """Fill past persons stats.
@@ -250,7 +254,6 @@ def stopTornado():
 
 if __name__ == "__main__":
     logging.info('Starting thread Tornado')
-
     threadTornado = Thread(target=startTornado)
     threadTornado.start()
     run()
