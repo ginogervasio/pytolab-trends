@@ -184,7 +184,7 @@ def update_person_stats(person, tweet):
     key = 'person:%d:posts_count' % (person['id'])
     lindex = db.lindex(key, -1)
     v = int(lindex if lindex else 0)
-    db.lset(key, -1, str(v+1))
+    db.rpush(key, str(v+1))
     if not first_person:
         first_person = person
     else:
@@ -195,7 +195,7 @@ def update_person_stats(person, tweet):
             d[str(person['id'])] += 1
         else:
             d[str(person['id'])] = 1
-        db.lset(key, -1, json.dumps(d))
+        db.rpush(key, json.dumps(d))
         logging.debug('key: %s, rels: %s' % (key, json.dumps(d)))
 
     persons = db.get_persons()
