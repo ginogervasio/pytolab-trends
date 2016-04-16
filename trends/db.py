@@ -243,6 +243,10 @@ class Db(object):
             person['rel'] = json.loads((rels if rels else '{}'))
             sentiment = self.lindex('person:%d:sentiment' % int(s[0]), -1)
             person['sentiment'] = float((sentiment if sentiment else 0))
+            sentiment_avg = self.get('person:%d:sentiment_avg' % int(s[0]))
+            person['sentiment_avg'] = float((sentiment_avg if sentiment_avg else 0.0))
+            sentiment_total = self.get('person:%d:sentiment_total_count' % int(s[0]))
+            person['sentiment_total_count'] = int((sentiment_total if sentiment_total else 0))
             persons.append(person)
 
         return persons

@@ -75,24 +75,13 @@ var colors = ['#ffa500', '#f2f238', '#add8e6', '#ff0000', '#98fb98', '#551a8b', 
 <body>
 <div class="container">
   <div class="row">
-    <p>&nbsp;</p>
-      <div class="panel panel-default">
-        <div class="panel-heading"><h3><a id="#sentiment">Sentiment scores per candidate</a></h3></div>
+    <div class="panel panel-default">
+        <div class="panel-heading"><h3><a id="#tweets">How people feel about each candidate</a></h3></div>
         <div class="panel-body">
-          <div class="alert alert-info" role="alert">Running live graph of sentiment scores per candidate</div>
-          <div id="sentimentContainer">
-            <div id="y_axis"></div>
-            <div id="sentimentGraph" ></div>
-            <div id="legend"></div><br><br>
-            <form id="offset_form" class="toggler">
-              <input type="radio" name="offset" id="lines" value="lines" checked>
-              <label class="lines" for="lines">lines</label><br>
-              <input type="radio" name="offset" id="stack" value="zero">
-              <label class="stack" for="stack">stack</label>
-            </form>  
-          </div>
+          <div class="alert alert-info" role="alert">Hover over the graph to see total sentiment scores processed per candidate</div>
+          <div id="sbarGraph"></div>
         </div>
-      </div>
+    </div>
   </div>
   <div class="row">
     <div class="panel panel-default">
@@ -117,10 +106,30 @@ var colors = ['#ffa500', '#f2f238', '#add8e6', '#ff0000', '#98fb98', '#551a8b', 
         <div class="panel-heading"><h3><a id="#livetweets">Live Tweets</a></h3></div>
         <div class="panel-body">
           <div id="live-tweets">
-            <ul class="list-group"></ul>  
-          </div>  
+            <ul class="list-group"></ul>
+          </div>
         </div>
   </div>
+  </div>
+  <div class="row">
+    <p>&nbsp;</p>
+      <div class="panel panel-default">
+        <div class="panel-heading"><h3><a id="#sentiment">Sentiment scores per candidate</a></h3></div>
+        <div class="panel-body">
+          <div class="alert alert-info" role="alert">Running live graph of sentiment scores per candidate</div>
+          <div id="sentimentContainer">
+            <div id="y_axis"></div>
+            <div id="sentimentGraph" ></div>
+            <div id="legend"></div><br><br>
+            <form id="offset_form" class="toggler">
+              <input type="radio" name="offset" id="lines" value="lines" checked>
+              <label class="lines" for="lines">lines</label><br>
+              <input type="radio" name="offset" id="stack" value="zero">
+              <label class="stack" for="stack">stack</label>
+            </form>
+          </div>
+        </div>
+      </div>
   </div>
 </div>
 </body>
@@ -306,6 +315,58 @@ function drawBar(data) {
     };
   }
 }
+
+function drawSBar(data) {
+
+  var sbsvg = d3.select("#sbarGraph").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  x.domain(data.map(function(d) { return d.name; }));
+  y.domain([0, d3.max(data, function(d) { return d.sentiment_avg; })]);
+
+  sbsvg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  sbsvg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Sentiment Scores");
+
+  sbsvg.selectAll(".bar")
+      .data(data)
+    .enter().append("rect")
+      .attr("class", "bar")
+      .attr("x", function(d) { return x(d.name); })
+      .attr("width", x.rangeBand())
+      .attr("y", function(d) { return y(d.sentiment_avg); })
+      .attr("height", function(d) { return height - y(d.sentiment_avg); })
+      .style("fill", function(d) { return colors[d.id]; })
+      .on("mouseover", fade(.1))
+      .on("mouseout", fade(1))
+      .append("title").text(function(d){
+        return d.name + " average sentiment: " + d.sentiment_avg + "; total tweets scored: " + d.sentiment_total_count;
+      });
+
+  function fade(opacity) {
+    return function(g, i) {
+      sbsvg.selectAll("rect.bar")
+          .filter(function(d) { return d.id != i; })
+        .transition()
+          .style("opacity", opacity);
+    };
+  }
+}
+
 </script>
 <script>
 var seriesData = [ [], [], [], [], [], [], [], [], [], [] ];
@@ -420,11 +481,13 @@ var ws = new WebSocket("ws://localhost:8888/ws");
 ws.onmessage = function(evt) {
   d3.select("#chordDiagram").selectAll("svg").remove();
   d3.select("#barGraph").selectAll("svg").remove();
+  d3.select("#sbarGraph").selectAll("svg").remove();
   try {
     var d = JSON.parse(evt.data);
     if (d && d.persons) {
       drawChord(d.persons);
       drawBar(d.persons);
+      drawSBar(d.persons);
       updateGraph(d.persons);
       if (d.tweet) {
         $('#live-tweets ul').append('<li class="list-group-item">' + d.tweet + '</li>')

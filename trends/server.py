@@ -91,13 +91,15 @@ def run():
     """Setup and have the consumer wait for the next message
     to consume.
     """
-    setup()
-    try:
-        mq.consumer.wait()
-    except Exception:
-        logging.error('AMQP exception consumer error')
-        mq.consumer.close()
-        setup_mq()
+    while True:
+        try:
+            mq.consumer.wait()
+            time.sleep(10)
+        except Exception:
+            logging.error('AMQP exception consumer error')
+            mq.consumer.close()
+            setup_mq()
+            continue
 
 def message_callback(message):
     """This is called when a new message arrives.
@@ -165,6 +167,21 @@ def process_post(post):
                     db.set_person_score(int(post_id), person_found['id'], float(ss['compound']))
                     key = 'person:%d:sentiment' % (person['id'])
                     db.rpush(key, float(ss['compound']))
+
+                    st_key = 'person:%d:sentiment_total_count' % (person['id'])
+                    stv = 0
+                    if db.exists(st_key):
+                        stv = db.get(st_key)
+                    db.set(st_key, int(stv + 1))
+                    logging.debug('SENTIMENT TOTAL: %s' % str(stv+1))
+
+                    sa_key = 'person:%d:sentiment_avg' % (person['id'])
+                    sav = 0.0
+                    if db.exists(sa_key):
+                        sav = db.get(sa_key)
+                    avg = (sav * stv + float(ss['compound'])) / (stv + 1)
+                    db.set(sa_key, float(avg))
+                    logging.debug('PERSON: %s, SENTIMENT AVG: %s' % (person['name'], avg))
 
                 tweet = orig_text;
                 if 'compound' in ss:
@@ -256,7 +273,9 @@ if __name__ == "__main__":
     logging.info('Starting thread Tornado')
     threadTornado = Thread(target=startTornado)
     threadTornado.start()
+    setup()
     run()
+
     try:
         raw_input("Server ready. Press enter to stop\n")
     except SyntaxError:
